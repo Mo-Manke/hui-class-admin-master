@@ -55,7 +55,7 @@ export const layoutRouter: RouteRecordRaw[] = [
         name: "legacyScheduleImport",
         redirect: "/schedule-import",
         meta: {
-          title: "课表导入",
+          title: "课表抓取",
           isHide: "0",
           isLink: "",
           isKeepAlive: "1",
@@ -225,7 +225,7 @@ export const staticRouter: RouteRecordRaw[] = [
         name: "scheduleImport",
         component: () => import("@/views/system/scheduleImport/index.vue"),
         meta: {
-          title: "课表导入",
+          title: "课表抓取",
           icon: "Upload",
           isHide: "1",
           isLink: "",

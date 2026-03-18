@@ -2,7 +2,7 @@
   <div class="dashboard-page">
     <el-row :gutter="16">
       <el-col v-for="card in cards" :key="card.key" :xs="24" :sm="12" :lg="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card class="stat-card" shadow="hover">
           <div class="stat-label">{{ card.label }}</div>
           <div class="stat-value">{{ summary[card.key] ?? 0 }}</div>
         </el-card>
@@ -12,29 +12,30 @@
     <el-row :gutter="16" class="m-t-16px">
       <el-col :xs="24" :lg="16">
         <el-card shadow="hover">
-          <template #header>最近导入任务</template>
-          <div v-if="summary.latest_import_task" class="task-panel">
+          <template #header>最近课表抓取</template>
+          <div v-if="summary.latest_sync_task" class="task-panel">
             <el-descriptions :column="2" border>
-              <el-descriptions-item label="任务ID">{{ summary.latest_import_task.id }}</el-descriptions-item>
+              <el-descriptions-item label="任务ID">{{ summary.latest_sync_task.id }}</el-descriptions-item>
               <el-descriptions-item label="状态">
-                <el-tag :type="tagType(summary.latest_import_task.status)">{{ summary.latest_import_task.status }}</el-tag>
+                <el-tag :type="tagType(summary.latest_sync_task.status)">{{ summary.latest_sync_task.status }}</el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="来源名称">{{ summary.latest_import_task.source_name || "-" }}</el-descriptions-item>
-              <el-descriptions-item label="文件名">{{ summary.latest_import_task.file_name || "-" }}</el-descriptions-item>
-              <el-descriptions-item label="导入条数">{{ summary.latest_import_task.imported_count || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="导入模式">{{ summary.latest_import_task.replace_mode ? "覆盖导入" : "追加导入" }}</el-descriptions-item>
-              <el-descriptions-item label="创建时间">{{ formatTime(summary.latest_import_task.createdAt) }}</el-descriptions-item>
-              <el-descriptions-item label="更新时间">{{ formatTime(summary.latest_import_task.updatedAt) }}</el-descriptions-item>
+              <el-descriptions-item label="最近更新时间">{{ formatTime(summary.latest_schedule_updated_at) }}</el-descriptions-item>
+              <el-descriptions-item label="成功账号">{{ summary.latest_sync_task.account_username || "-" }}</el-descriptions-item>
+              <el-descriptions-item label="触发方式">{{ summary.latest_sync_task.trigger_type || "-" }}</el-descriptions-item>
+              <el-descriptions-item label="更新条数">{{ summary.latest_sync_task.imported_count || 0 }}</el-descriptions-item>
+              <el-descriptions-item label="开始时间">{{ formatTime(summary.latest_sync_task.started_at) }}</el-descriptions-item>
+              <el-descriptions-item label="结束时间">{{ formatTime(summary.latest_sync_task.finished_at) }}</el-descriptions-item>
+              <el-descriptions-item label="结果摘要" :span="2">{{ summary.latest_sync_task.result_message || "-" }}</el-descriptions-item>
             </el-descriptions>
             <el-alert
-              v-if="summary.latest_import_task.error_message"
+              v-if="summary.latest_sync_task.error_message"
               class="m-t-16px"
               type="error"
               :closable="false"
-              :title="summary.latest_import_task.error_message"
+              :title="summary.latest_sync_task.error_message"
             />
           </div>
-          <el-empty v-else description="暂无导入记录" />
+          <el-empty v-else description="暂无抓取记录" />
         </el-card>
       </el-col>
 
@@ -42,7 +43,7 @@
         <el-card shadow="hover">
           <template #header>快捷入口</template>
           <div class="quick-actions">
-            <el-button type="primary" @click="router.push('/schedule-import')">课表导入</el-button>
+            <el-button type="primary" @click="router.push('/schedule-import')">课表抓取</el-button>
             <el-button @click="router.push('/essential')">配置管理</el-button>
             <el-button @click="router.push('/app-users')">用户管理</el-button>
             <el-button @click="router.push('/swiper-image')">轮播图列表</el-button>
@@ -65,7 +66,8 @@ const summary = reactive<Record<string, any>>({
   app_user_count: 0,
   swiper_count: 0,
   schedule_count: 0,
-  latest_import_task: null
+  latest_schedule_updated_at: null,
+  latest_sync_task: null
 });
 
 const cards = computed(() => [
@@ -75,7 +77,7 @@ const cards = computed(() => [
   { key: "schedule_count", label: "课表记录数" }
 ]);
 
-const formatTime = (value?: string) => {
+const formatTime = (value?: string | null) => {
   if (!value) return "-";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN", { hour12: false });
