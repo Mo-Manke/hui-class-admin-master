@@ -1,22 +1,18 @@
 import { defineConfig, loadEnv, ConfigEnv, UserConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
-// keepAlive 组件name
 import vueSetupExtend from "vite-plugin-vue-setup-extend";
-// 引入svg需要的插件
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons";
 import Unocss from "unocss/vite";
-// 数据mock配置
 import { viteMockServe } from "vite-plugin-mock";
-// gzip压缩
 import viteCompression from "vite-plugin-compression";
-// 图片压缩
-import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
+import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import path from "path";
 
-// https://vitejs.dev/config/
-// 配置mock根据官网，这里写法将改成箭头函数
 export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
-  const env = loadEnv(mode, process.cwd()); // 获取配置文件别名配置
+  const env = loadEnv(mode, process.cwd());
+  const devHost = env.VITE_DEV_HOST || "0.0.0.0";
+  const devPort = Number(env.VITE_DEV_PORT || 5730);
+
   return {
     plugins: [
       vue(),
@@ -25,29 +21,24 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
       viteCompression(),
       ViteImageOptimizer(),
       createSvgIconsPlugin({
-        // 配置SVG图片
         iconDirs: [path.resolve(process.cwd(), "src/assets/icons")],
         symbolId: "icon-[dir]-[name]"
       }),
-      // 配置mock
       viteMockServe({
-        // 解析根目录下的mock文件夹
         mockPath: "mock",
         // @ts-ignore
-        localEnabled: command === "serve", // 保证开发阶段可以使用mock接口
-        supportTs: true, // 打开后，可以读取 ts 文件模块。 请注意，打开后将无法监视.js 文件。
-        watchFiles: true // 监视文件更改 更改mock的时候，不需要重新启动编译
+        localEnabled: command === "serve",
+        supportTs: true,
+        watchFiles: true
       })
     ],
     resolve: {
-      // 配置路径别名
       alias: {
-        "@": path.resolve("./src"), // 相对路径别名配置，使用 @ 代替 src
+        "@": path.resolve("./src"),
         "~": path.resolve("./src")
       }
     },
     css: {
-      // css全局变量使用，@/styles/variable.scss文件
       preprocessorOptions: {
         scss: {
           javascriptEnabled: true,
@@ -56,29 +47,22 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
       }
     },
     server: {
-      host: "0.0.0.0", // 允许本机IP访问 0.0.0.0
-      allowedHosts: [
-      'dev-frp.fishceo.com',
-      ],
-      port: 5730, // 端口号
-      hmr: true, // 热更新
-      open: true, // 自动打开
+      host: devHost,
+      allowedHosts: true,
+      port: devPort,
+      hmr: true,
+      open: true,
       proxy: {
-        // 代理跨域
         [env.VITE_WEB_BASE_API]: {
-          // 配置哪个环境下的
           target: env.VITE_SERVER,
-          rewrite: path => path.replace(new RegExp("^" + env.VITE_WEB_BASE_API), ""), // 路径重写，例如：将路径中包含dev-api字段替换为空。注意：只有请求真实后端接口才会有用，使用mock接口还是得带koi
-          // 允许跨域
+          rewrite: path => path.replace(new RegExp("^" + env.VITE_WEB_BASE_API), ""),
           changeOrigin: true
         }
       }
     },
     esbuild: {
-      // 在生产环境全部去除console 和 debugger
       drop: env.VITE_DROP_CONSOLE.length < 5 ? ["console", "debugger"] : []
     },
-    // 预编译，增加访问速度，针对node_modules
     optimizeDeps: {
       include: [
         "vue",
