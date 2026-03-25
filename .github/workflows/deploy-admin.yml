@@ -23,19 +23,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Upload deploy script
-        uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          port: ${{ secrets.SERVER_PORT }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source: scripts/deploy-admin.sh
-          target: ${{ github.event.inputs.app_root }}/scripts
-          strip_components: 1
+          ref: ${{ github.event.inputs.branch }}
 
-      - name: Run deploy script
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build:prod
+
+      - name: Prepare remote directories
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -43,11 +45,36 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script_stop: true
-          envs: APP_ROOT,SITE_DIR,DEPLOY_BRANCH
+          envs: APP_ROOT,SITE_DIR
           script: |
-            chmod +x "${APP_ROOT}/scripts/deploy-admin.sh"
-            "${APP_ROOT}/scripts/deploy-admin.sh"
+            mkdir -p "${APP_ROOT}/deploy-dist" "${SITE_DIR}"
         env:
           APP_ROOT: ${{ github.event.inputs.app_root }}
           SITE_DIR: ${{ github.event.inputs.site_dir }}
-          DEPLOY_BRANCH: ${{ github.event.inputs.branch }}
+
+      - name: Upload dist
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_PORT }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: dist/*
+          target: ${{ github.event.inputs.app_root }}/deploy-dist
+
+      - name: Publish dist
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_PORT }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script_stop: true
+          envs: APP_ROOT,SITE_DIR
+          script: |
+            find "${SITE_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+            cp -R "${APP_ROOT}/deploy-dist"/. "${SITE_DIR}/"
+            find "${APP_ROOT}/deploy-dist" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+        env:
+          APP_ROOT: ${{ github.event.inputs.app_root }}
+          SITE_DIR: ${{ github.event.inputs.site_dir }}
