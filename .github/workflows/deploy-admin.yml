@@ -1,0 +1,53 @@
+name: Deploy Admin
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to deploy
+        required: true
+        default: master
+      app_root:
+        description: Remote app root
+        required: true
+        default: /www/wwwroot/hui-class-admin
+      site_dir:
+        description: Remote static site directory
+        required: true
+        default: /www/wwwroot/hui-class-admin/www
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload deploy script
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_PORT }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: scripts/deploy-admin.sh
+          target: ${{ github.event.inputs.app_root }}/scripts
+          strip_components: 1
+
+      - name: Run deploy script
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_PORT }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true
+          envs: APP_ROOT,SITE_DIR,DEPLOY_BRANCH
+          script: |
+            chmod +x "${APP_ROOT}/scripts/deploy-admin.sh"
+            "${APP_ROOT}/scripts/deploy-admin.sh"
+        env:
+          APP_ROOT: ${{ github.event.inputs.app_root }}
+          SITE_DIR: ${{ github.event.inputs.site_dir }}
+          DEPLOY_BRANCH: ${{ github.event.inputs.branch }}
