@@ -53,6 +53,7 @@ jobs:
           envs: APP_ROOT,SITE_DIR
           script: |
             mkdir -p "${APP_ROOT}/deploy-dist" "${SITE_DIR}"
+            find "${APP_ROOT}/deploy-dist" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
         env:
           APP_ROOT: ${{ github.event.inputs.app_root }}
           SITE_DIR: ${{ github.event.inputs.site_dir }}
@@ -78,7 +79,14 @@ jobs:
           script_stop: true
           envs: APP_ROOT,SITE_DIR
           script: |
-            find "${SITE_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+            for path in "${SITE_DIR}"/* "${SITE_DIR}"/.[!.]* "${SITE_DIR}"/..?*; do
+              [ -e "${path}" ] || continue
+              base_name="$(basename "${path}")"
+              if [ "${base_name}" = ".user.ini" ]; then
+                continue
+              fi
+              rm -rf "${path}"
+            done
             cp -R "${APP_ROOT}/deploy-dist"/. "${SITE_DIR}/"
             find "${APP_ROOT}/deploy-dist" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
             if [ ! -f "${SITE_DIR}/index.html" ]; then
