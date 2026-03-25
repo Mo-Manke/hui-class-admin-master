@@ -30,7 +30,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          password: ${{ secrets.SERVER_PASSWORD }}
           source: scripts/deploy-admin.sh
           target: ${{ github.event.inputs.app_root }}/scripts
           strip_components: 1
@@ -41,7 +41,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          password: ${{ secrets.SERVER_PASSWORD }}
           script_stop: true
           envs: APP_ROOT,SITE_DIR,DEPLOY_BRANCH
           script: |
