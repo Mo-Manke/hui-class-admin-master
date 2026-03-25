@@ -64,8 +64,9 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: dist/*
+          source: dist
           target: ${{ github.event.inputs.app_root }}/deploy-dist
+          strip_components: 1
 
       - name: Publish dist
         uses: appleboy/ssh-action@v1.2.0
@@ -80,6 +81,11 @@ jobs:
             find "${SITE_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
             cp -R "${APP_ROOT}/deploy-dist"/. "${SITE_DIR}/"
             find "${APP_ROOT}/deploy-dist" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+            if [ ! -f "${SITE_DIR}/index.html" ]; then
+              echo "index.html not found in site root: ${SITE_DIR}"
+              exit 1
+            fi
+            ls -la "${SITE_DIR}"
         env:
           APP_ROOT: ${{ github.event.inputs.app_root }}
           SITE_DIR: ${{ github.event.inputs.site_dir }}
