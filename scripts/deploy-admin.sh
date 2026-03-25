@@ -17,8 +17,10 @@ cd "$REPO_DIR"
 git fetch --all --prune
 git reset --hard "origin/$DEPLOY_BRANCH"
 
-npm ci
-npm run build:prod
+corepack enable
+corepack prepare pnpm@latest --activate
+pnpm install --frozen-lockfile
+pnpm run build:prod
 
 if [ ! -d "dist" ]; then
   echo "dist directory not found"
