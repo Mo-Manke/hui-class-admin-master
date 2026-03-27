@@ -64,6 +64,19 @@ export const layoutRouter: RouteRecordRaw[] = [
         }
       },
       {
+        path: "/system/score-sync",
+        name: "legacyScoreSync",
+        redirect: "/score-sync",
+        meta: {
+          title: "成绩同步",
+          isHide: "0",
+          isLink: "",
+          isKeepAlive: "1",
+          isFull: "1",
+          isAffix: "1"
+        }
+      },
+      {
         path: "/system/personage",
         name: "legacySystemPersonage",
         redirect: "/personage",
@@ -227,6 +240,21 @@ export const staticRouter: RouteRecordRaw[] = [
         meta: {
           title: "课表抓取",
           icon: "Upload",
+          isHide: "1",
+          isLink: "",
+          isKeepAlive: "1",
+          isFull: "1",
+          isAffix: "1",
+          activeMenu: "/system"
+        }
+      },
+      {
+        path: "/score-sync",
+        name: "scoreSync",
+        component: () => import("@/views/system/scoreSync/index.vue"),
+        meta: {
+          title: "成绩同步",
+          icon: "DocumentChecked",
           isHide: "1",
           isLink: "",
           isKeepAlive: "1",
